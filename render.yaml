@@ -11,6 +11,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
-        value: https://farmnexus-6d3d1.web.app
+        value: https://farmnexus-6d3d1.web.app,https://farmnexus-6d3d1.firebaseapp.com
       - key: JWT_SECRET
         generateValue: true
+      - key: FIREBASE_CONFIG_JSON
+        sync: false
+
