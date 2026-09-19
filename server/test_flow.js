@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5055/api';
+const BASE_URL = (process.env.TEST_API_URL || 'http://localhost:5055/api').replace(/\/+$/, '');
 
 async function testAll() {
   console.log('🌾 Starting FarmNexus Automated End-to-End Test Suite...\n');
