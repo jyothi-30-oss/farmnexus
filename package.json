@@ -1,0 +1,10 @@
+{
+  "name": "farmnexus",
+  "version": "1.0.0",
+  "description": "FarmNexus - Farmer to Buyer Marketplace",
+  "scripts": {
+    "server": "npm --prefix server run dev",
+    "client": "npm --prefix client run dev",
+    "test": "npm --prefix server run test"
+  }
+}

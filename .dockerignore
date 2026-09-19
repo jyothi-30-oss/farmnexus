@@ -1,0 +1,13 @@
+node_modules
+client/node_modules
+server/node_modules
+npm-debug.log
+.git
+.gitignore
+server/data/firestore_db.json
+serviceAccountKey.json
+server/serviceAccountKey.json
+*.key
+*.env*
+.firebase
+.firebaserc

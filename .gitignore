@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production build outputs
+client/dist/
+
+# Environment and sensitive keys
+.env
+.env.*
+server/.env*
+*.key
+serviceAccountKey.json
+server/serviceAccountKey.json
+*serviceAccount*.json
+*credentials*.json
+
+# Local Firestore emulator database
+server/data/firestore_db.json
+
+# Logs & temp files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.firebase/

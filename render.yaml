@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: farmnexus-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://farmnexus-6d3d1.web.app
+      - key: JWT_SECRET
+        generateValue: true
