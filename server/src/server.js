@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import requestRoutes from './routes/requestRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import db, { isRealFirestore } from './config/firebase.js';
 
 dotenv.config();
 
@@ -47,12 +48,28 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/orders', orderRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
+app.get('/api/health', async (req, res) => {
+  let databaseConnected = false;
+  const databaseType = isRealFirestore ? 'firestore' : 'local';
+
+  try {
+    if (db) {
+      await db.collection('farmers').limit(1).get();
+      databaseConnected = true;
+    }
+  } catch (err) {
+    console.warn('Database health probe check failed:', err.message);
+    databaseConnected = false;
+  }
+
+  const isHealthy = databaseConnected;
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'degraded',
     app: 'FarmNexus API',
+    database: databaseType,
+    databaseConnected,
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'production',
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
