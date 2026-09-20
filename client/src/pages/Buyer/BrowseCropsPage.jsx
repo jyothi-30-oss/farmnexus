@@ -112,12 +112,12 @@ export const BrowseCropsPage = ({ onNavigateOrders }) => {
     }
   };
 
-  // Filter listings strictly by crop name (case-insensitive)
+  // Filter listings strictly by crop name (matching exactly as entered)
   const filteredListings = listings.filter((l) => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchQuery.trim();
     if (!q) return true;
-    const crop = (l.cropName || '').toLowerCase();
-    const translated = (translateCrop(l.cropName) || '').toLowerCase();
+    const crop = l.cropName || '';
+    const translated = translateCrop(l.cropName) || '';
     return crop.includes(q) || translated.includes(q);
   });
 
