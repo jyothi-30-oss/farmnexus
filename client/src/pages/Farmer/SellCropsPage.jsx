@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { CROPS_LIST, MARKET_PRICES, VALID_UNITS } from '../../constants/crops';
+import { MARKET_PRICES, VALID_UNITS } from '../../constants/crops';
 import { getApiUrl } from '../../config/api';
 import { 
   Sprout, 
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const SellCropsPage = ({ onBack, onNavigateListings }) => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { t, translateCrop } = useLanguage();
 
   const [cropName, setCropName] = useState('');
@@ -27,6 +27,9 @@ export const SellCropsPage = ({ onBack, onNavigateListings }) => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Farmer's registered crops from their profile/registration
+  const farmerCrops = Array.isArray(user?.cropsGrown) ? user.cropsGrown : [];
+
   // Reference Market Price (automatically shown when crop selected)
   const referencePrice = cropName ? MARKET_PRICES[cropName] : null;
 
@@ -35,9 +38,19 @@ export const SellCropsPage = ({ onBack, onNavigateListings }) => {
     setError('');
     setSuccess('');
 
+    if (farmerCrops.length === 0) {
+      setError(t('noCropsRegistered'));
+      return;
+    }
+
     // Validations
     if (!cropName) {
       setError(t('fieldRequired') + ': ' + t('selectCrop'));
+      return;
+    }
+
+    if (!farmerCrops.includes(cropName)) {
+      setError(`You can only list crops that you selected during registration.`);
       return;
     }
 
@@ -129,21 +142,39 @@ export const SellCropsPage = ({ onBack, onNavigateListings }) => {
           </div>
         )}
 
+        {farmerCrops.length === 0 && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-start gap-3 animate-fade-in">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+            <div>
+              <p className="font-bold">{t('noCropsRegistered')}</p>
+            </div>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 1. Crop Selection */}
+          {/* 1. Crop Selection (Filtered to Farmer's registered crops) */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
-              {t('selectCrop')} *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+                {t('selectCrop')} *
+              </label>
+              {farmerCrops.length > 0 && (
+                <span className="text-[11px] text-farm-700 font-semibold">
+                  {farmerCrops.length} {farmerCrops.length === 1 ? 'crop' : 'crops'} available
+                </span>
+              )}
+            </div>
+
             <select
               value={cropName}
               onChange={(e) => setCropName(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600 disabled:opacity-50"
               required
+              disabled={farmerCrops.length === 0}
             >
               <option value="">{t('chooseCrop')}</option>
-              {CROPS_LIST.map((crop) => (
+              {farmerCrops.map((crop) => (
                 <option key={crop} value={crop}>
                   {translateCrop(crop)}
                 </option>
@@ -191,8 +222,9 @@ export const SellCropsPage = ({ onBack, onNavigateListings }) => {
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   placeholder={t('quantityPlaceholder')}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600 disabled:opacity-50"
                   required
+                  disabled={farmerCrops.length === 0}
                 />
               </div>
             </div>
@@ -208,8 +240,9 @@ export const SellCropsPage = ({ onBack, onNavigateListings }) => {
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600 disabled:opacity-50"
                   required
+                  disabled={farmerCrops.length === 0}
                 >
                   <option value="kg">{t('unitKg')}</option>
                   <option value="quintal">{t('unitQuintal')}</option>
@@ -235,8 +268,9 @@ export const SellCropsPage = ({ onBack, onNavigateListings }) => {
                 value={expectedPricePerUnit}
                 onChange={(e) => setExpectedPricePerUnit(e.target.value)}
                 placeholder={t('expectedPricePlaceholder')}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600 disabled:opacity-50"
                 required
+                disabled={farmerCrops.length === 0}
               />
             </div>
             <p className="mt-1.5 text-xs text-farm-800 font-medium">
@@ -248,7 +282,7 @@ export const SellCropsPage = ({ onBack, onNavigateListings }) => {
           <div className="pt-4 flex flex-col sm:flex-row gap-3">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || farmerCrops.length === 0}
               className="flex-1 py-3.5 px-6 bg-farm-600 hover:bg-farm-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
             >
               <Send className="w-4 h-4" />

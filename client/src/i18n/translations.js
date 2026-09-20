@@ -100,6 +100,7 @@ export const translations = {
     submittingListing: "Publishing...",
     backBtn: "Back",
     listingSuccessMsg: "Listing created successfully! Available for buyers.",
+    noCropsRegistered: "No crops selected during registration.",
 
     // My Listings Page
     myListingsTitle: "My Active Crop Listings",
@@ -303,6 +304,7 @@ export const translations = {
     submittingListing: "ప్రచురిస్తోంది...",
     backBtn: "వెనుకకు",
     listingSuccessMsg: "పంట జాబితా విజయవంతంగా సృష్టించబడింది! కొనుగోలుదారులకు అందుబాటులో ఉంది.",
+    noCropsRegistered: "నమోదు సమయంలో పంటలు ఎంచుకోలేదు.",
 
     // My Listings Page
     myListingsTitle: "నా క్రియాశీల పంట జాబితాలు",
@@ -506,6 +508,7 @@ export const translations = {
     submittingListing: "प्रकाशित हो रहा है...",
     backBtn: "वापस",
     listingSuccessMsg: "फसल सफलतापूर्वक जोड़ी गई! खरीदारों के लिए उपलब्ध है।",
+    noCropsRegistered: "पंजीकरण के दौरान कोई फसल नहीं चुनी गई।",
 
     // My Listings Page
     myListingsTitle: "मेरी सक्रिय फसलें",

@@ -96,11 +96,30 @@ async function testAll() {
       }),
     });
     const listingData = await createListingRes.json();
-    assert(listingData.success === true, 'Listing created successfully');
+    assert(listingData.success === true, 'Listing created successfully for registered crop (Rice)');
     assert(listingData.listing.marketPrice === 24, 'Reference demo market price (₹24) attached');
     assert(listingData.listing.finalPricePerUnit === 26, 'Farmer expected price becomes final price');
     assert(listingData.listing.availableQuantity === 500, 'Initial available quantity set to 500');
     const listingId = listingData.listing.id;
+
+    // 4a. Test Attempting to List Unregistered Crop (Potato)
+    console.log('\n4a. Testing Listing Creation with Unregistered Crop...');
+    const unregCropRes = await fetch(`${BASE_URL}/listings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${farmerToken}`,
+      },
+      body: JSON.stringify({
+        cropName: 'Potato',
+        quantity: 100,
+        unit: 'kg',
+        expectedPricePerUnit: 30,
+      }),
+    });
+    const unregCropData = await unregCropRes.json();
+    assert(unregCropRes.status === 400, 'Listing creation for unregistered crop rejected with 400 status');
+    assert(unregCropData.success === false, 'Listing creation for unregistered crop returns success: false');
 
     // 4b. Test Updating Expected Price by Farmer
     console.log('\n4b. Testing Farmer Updating Expected Price...');

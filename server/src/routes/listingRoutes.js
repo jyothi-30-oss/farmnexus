@@ -56,6 +56,15 @@ router.post('/', authenticate, requireRole('farmer'), async (req, res) => {
     }
     const farmerData = farmerSnap.data();
 
+    // Verify that the crop being listed is among the farmer's registered crops
+    const registeredCrops = Array.isArray(farmerData.cropsGrown) ? farmerData.cropsGrown : [];
+    if (!registeredCrops.includes(cropName)) {
+      return res.status(400).json({
+        success: false,
+        message: `You can only list crops that you selected during registration (${registeredCrops.join(', ') || 'none'}).`,
+      });
+    }
+
     const listingData = {
       farmerId: req.user.id,
       cropName,
