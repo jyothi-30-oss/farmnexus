@@ -112,13 +112,13 @@ export const BrowseCropsPage = ({ onNavigateOrders }) => {
     }
   };
 
-  // Filter listings
+  // Filter listings strictly by crop name (case-insensitive)
   const filteredListings = listings.filter((l) => {
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
     const crop = (l.cropName || '').toLowerCase();
-    const loc = `${l.village} ${l.district} ${l.state}`.toLowerCase();
-    const farmer = (l.farmerName || '').toLowerCase();
-    return crop.includes(q) || loc.includes(q) || farmer.includes(q);
+    const translated = (translateCrop(l.cropName) || '').toLowerCase();
+    return crop.includes(q) || translated.includes(q);
   });
 
   // Calculate modal crop amount: Quantity × Final Price Per Unit
@@ -152,8 +152,18 @@ export const BrowseCropsPage = ({ onNavigateOrders }) => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('searchCropPlaceholder')}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600 transition"
+              className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-farm-600 transition"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                title="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           <button
@@ -204,13 +214,23 @@ export const BrowseCropsPage = ({ onNavigateOrders }) => {
             <Search className="w-8 h-8" />
           </div>
           <h3 className="text-base font-bold text-gray-900 mb-1">
-            {t('noListingsAvailable')}
+            {searchQuery.trim() ? (t('noCropsFound') || 'No crops found') : t('noListingsAvailable')}
           </h3>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            {searchQuery
+            {searchQuery.trim()
               ? 'No crops match your search query. Try clearing the search filter.'
               : 'Farmers will list new harvest shortly. Check back frequently!'}
           </p>
+          {searchQuery.trim() && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition inline-flex items-center gap-1.5"
+            >
+              <X className="w-3.5 h-3.5" />
+              Clear Search
+            </button>
+          )}
         </div>
       )}
 
