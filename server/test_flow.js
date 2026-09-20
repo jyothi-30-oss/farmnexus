@@ -102,6 +102,49 @@ async function testAll() {
     assert(listingData.listing.availableQuantity === 500, 'Initial available quantity set to 500');
     const listingId = listingData.listing.id;
 
+    // 4b. Test Updating Expected Price by Farmer
+    console.log('\n4b. Testing Farmer Updating Expected Price...');
+    // Invalid price (negative)
+    const invalidPriceRes = await fetch(`${BASE_URL}/listings/${listingId}/price`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${farmerToken}`,
+      },
+      body: JSON.stringify({ expectedPricePerUnit: -10 }),
+    });
+    const invalidPriceData = await invalidPriceRes.json();
+    assert(invalidPriceData.success === false, 'Negative expected price is rejected');
+
+    // Unauthorized update attempt by buyer
+    const unauthPriceRes = await fetch(`${BASE_URL}/listings/${listingId}/price`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${buyerToken}`,
+      },
+      body: JSON.stringify({ expectedPricePerUnit: 30 }),
+    });
+    const unauthPriceData = await unauthPriceRes.json();
+    assert(unauthPriceData.success === false, 'Buyer cannot update farmer listing price');
+
+    // Valid price update (from 26 to 28)
+    const updatePriceRes = await fetch(`${BASE_URL}/listings/${listingId}/price`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${farmerToken}`,
+      },
+      body: JSON.stringify({ expectedPricePerUnit: 28 }),
+    });
+    const updatePriceData = await updatePriceRes.json();
+    assert(updatePriceData.success === true, 'Farmer updated expected price successfully');
+    assert(updatePriceData.listing.id === listingId, 'Same listing document is updated (no duplicates)');
+    assert(updatePriceData.listing.finalPricePerUnit === 28, 'New expected price is ₹28');
+    assert(updatePriceData.listing.marketPrice === 24, 'Market reference price (₹24) preserved unchanged');
+    assert(updatePriceData.listing.availableQuantity === 500, 'Available quantity preserved');
+    assert(updatePriceData.listing.cropName === 'Rice', 'Crop name preserved');
+
     // 5. Browse Listings (Buyer)
     console.log('\n5. Testing Buyer Browsing Listings...');
     const browseRes = await fetch(`${BASE_URL}/listings`, {
@@ -111,6 +154,7 @@ async function testAll() {
     assert(browseData.success === true, 'Buyer can fetch active listings');
     const foundListing = browseData.listings.find((l) => l.id === listingId);
     assert(foundListing !== undefined, 'Created listing is visible to buyer');
+    assert(foundListing.finalPricePerUnit === 28, 'Updated expected price (₹28) is visible to buyer');
     assert(foundListing.farmerPhone === farmerPhone, 'Farmer phone is visible to buyer');
 
     // 6. Buyer Purchase Request (Quantity only)
@@ -139,13 +183,13 @@ async function testAll() {
       },
       body: JSON.stringify({
         listingId,
-        requiredQuantity: 100, // 100 kg @ ₹26 = ₹2,600
+        requiredQuantity: 100, // 100 kg @ ₹28 = ₹2,800
       }),
     });
     const purchaseData = await purchaseRes.json();
     assert(purchaseData.success === true, 'Purchase request created successfully');
     assert(purchaseData.request.status === 'PENDING', 'Initial request status is PENDING');
-    assert(purchaseData.request.cropAmount === 2600, 'Crop Amount calculated as 100 * 26 = ₹2,600');
+    assert(purchaseData.request.cropAmount === 2800, 'Crop Amount calculated as 100 * 28 = ₹2,800');
     const requestId = purchaseData.request.id;
 
     // 7. Farmer Views Pending Requests
@@ -198,7 +242,7 @@ async function testAll() {
     const deliveryData = await deliveryRes.json();
     assert(deliveryData.success === true, 'Delivery charge updated');
     assert(deliveryData.order.deliveryCharge === 150, 'Delivery charge set to ₹150');
-    assert(deliveryData.order.totalAmount === 2750, 'Total Amount = 2600 + 150 = ₹2,750');
+    assert(deliveryData.order.totalAmount === 2950, 'Total Amount = 2800 + 150 = ₹2,950');
 
     // 10. Status Transitions: ACCEPTED -> READY -> SHIPPED -> DELIVERED
     console.log('\n10. Testing Order Status Flow (ACCEPTED -> READY -> SHIPPED -> DELIVERED)...');

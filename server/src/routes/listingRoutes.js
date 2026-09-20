@@ -149,6 +149,81 @@ router.get('/farmer', authenticate, requireRole('farmer'), async (req, res) => {
 });
 
 // ==========================================
+// UPDATE LISTING EXPECTED PRICE (FARMER ONLY)
+// ==========================================
+const handleUpdatePrice = async (req, res) => {
+  try {
+    const listingId = req.params.id;
+    const { expectedPricePerUnit, newPrice, price } = req.body;
+
+    const rawPrice = expectedPricePerUnit !== undefined ? expectedPricePerUnit : (newPrice !== undefined ? newPrice : price);
+    const numPrice = Number(rawPrice);
+
+    if (rawPrice === undefined || rawPrice === null || isNaN(numPrice) || numPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Expected price must be a valid positive number.',
+      });
+    }
+
+    const listingRef = db.collection('listings').doc(listingId);
+    const listingSnap = await listingRef.get();
+
+    if (!listingSnap.exists) {
+      return res.status(404).json({
+        success: false,
+        message: 'Crop listing not found.',
+      });
+    }
+
+    const listing = listingSnap.data();
+
+    // Verify that only the farmer who owns the listing can update it
+    if (listing.farmerId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized. You can only update your own listings.',
+      });
+    }
+
+    // Verify listing is active
+    if (listing.status !== 'ACTIVE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only active listings can be updated.',
+      });
+    }
+
+    const updatedData = {
+      finalPricePerUnit: numPrice,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await listingRef.update(updatedData);
+
+    return res.json({
+      success: true,
+      message: 'Expected price updated successfully.',
+      listing: {
+        id: listingId,
+        ...listing,
+        ...updatedData,
+      },
+    });
+  } catch (err) {
+    console.error('Update listing price error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while updating expected price.',
+    });
+  }
+};
+
+router.patch('/:id/price', authenticate, requireRole('farmer'), handleUpdatePrice);
+router.put('/:id/price', authenticate, requireRole('farmer'), handleUpdatePrice);
+router.patch('/:id', authenticate, requireRole('farmer'), handleUpdatePrice);
+
+// ==========================================
 // GET REFERENCE MARKET PRICES
 // ==========================================
 router.get('/market-prices', authenticate, (req, res) => {

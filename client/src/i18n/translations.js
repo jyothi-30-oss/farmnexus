@@ -113,6 +113,13 @@ export const translations = {
     listedOn: "Listed On",
     statusActive: "Active",
     statusSoldOut: "Sold Out",
+    editExpectedPriceBtn: "Edit Expected Price",
+    currentExpectedPriceLabel: "Current Expected Price",
+    newExpectedPriceLabel: "New Expected Price",
+    updatePriceBtn: "Update Price",
+    updatingPrice: "Updating...",
+    priceUpdateSuccess: "Expected price updated successfully.",
+    pricePositiveError: "Expected price must be a valid positive number.",
 
     // Farmer Buyer Requests Page
     buyerRequestsTitle: "Buyer Purchase Requests",
@@ -309,6 +316,13 @@ export const translations = {
     listedOn: "లిస్ట్ చేసిన తేదీ",
     statusActive: "క్రియాశీలం",
     statusSoldOut: "అమ్ముడైపోయింది",
+    editExpectedPriceBtn: "ఆశించిన ధరను సవరించండి",
+    currentExpectedPriceLabel: "ప్రస్తుత ఆశించిన ధర",
+    newExpectedPriceLabel: "కొత్త ఆశించిన ధర",
+    updatePriceBtn: "ధరను నవీకరించండి",
+    updatingPrice: "నవీకరిస్తోంది...",
+    priceUpdateSuccess: "ఆశించిన ధర విజయవంతంగా నవీకరించబడింది.",
+    pricePositiveError: "ఆశించిన ధర చెల్లుబాటు అయ్యే సానుకూల సంఖ్య అయి ఉండాలి.",
 
     // Farmer Buyer Requests Page
     buyerRequestsTitle: "కొనుగోలుదారుల కొనుగోలు అభ్యర్థనలు",
@@ -505,6 +519,13 @@ export const translations = {
     listedOn: "जोड़ने की तिथि",
     statusActive: "सक्रिय",
     statusSoldOut: "बिक चुकी है",
+    editExpectedPriceBtn: "अपेक्षित मूल्य संपादित करें",
+    currentExpectedPriceLabel: "वर्तमान अपेक्षित मूल्य",
+    newExpectedPriceLabel: "नया अपेक्षित मूल्य",
+    updatePriceBtn: "मूल्य अपडेट करें",
+    updatingPrice: "अपडेट हो रहा है...",
+    priceUpdateSuccess: "अपेक्षित मूल्य सफलतापूर्वक अपडेट किया गया।",
+    pricePositiveError: "अपेक्षित मूल्य एक वैध सकारात्मक संख्या होनी चाहिए।",
 
     // Farmer Buyer Requests Page
     buyerRequestsTitle: "खरीदार खरीद अनुरोध",

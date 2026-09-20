@@ -11,7 +11,10 @@ import {
   Scale, 
   IndianRupee, 
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Edit3,
+  Check,
+  CheckCircle
 } from 'lucide-react';
 
 export const FarmerListingsPage = ({ onNavigateSell }) => {
@@ -21,6 +24,13 @@ export const FarmerListingsPage = ({ onNavigateSell }) => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Edit Price States
+  const [editingListingId, setEditingListingId] = useState(null);
+  const [newPrice, setNewPrice] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const fetchListings = async () => {
     try {
@@ -44,6 +54,60 @@ export const FarmerListingsPage = ({ onNavigateSell }) => {
   useEffect(() => {
     fetchListings();
   }, [token]);
+
+  const handleStartEdit = (listing) => {
+    setEditingListingId(listing.id);
+    setNewPrice(String(listing.finalPricePerUnit || ''));
+    setEditError('');
+    setSuccessMessage('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingListingId(null);
+    setNewPrice('');
+    setEditError('');
+  };
+
+  const handleUpdatePrice = async (listingId) => {
+    setEditError('');
+    const parsedPrice = Number(newPrice);
+    if (!newPrice || isNaN(parsedPrice) || parsedPrice <= 0) {
+      setEditError(t('pricePositiveError') || 'Expected price must be a valid positive number.');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const res = await fetch(getApiUrl(`/api/listings/${listingId}/price`), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ expectedPricePerUnit: parsedPrice }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update expected price.');
+      }
+
+      // Update listings state locally
+      setListings((prev) =>
+        prev.map((l) => (l.id === listingId ? { ...l, finalPricePerUnit: parsedPrice } : l))
+      );
+      setSuccessMessage(t('priceUpdateSuccess') || 'Expected price updated successfully.');
+      setEditingListingId(null);
+      setNewPrice('');
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 4000);
+    } catch (err) {
+      setEditError(err.message || t('genericError') || 'Something went wrong.');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -81,6 +145,13 @@ export const FarmerListingsPage = ({ onNavigateSell }) => {
         <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-start gap-3 animate-fade-in">
+          <CheckCircle className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" />
+          <span className="font-semibold">{successMessage}</span>
         </div>
       )}
 
@@ -177,6 +248,90 @@ export const FarmerListingsPage = ({ onNavigateSell }) => {
                     </span>
                   </div>
                 </div>
+
+                {/* Edit Expected Price Section */}
+                {editingListingId === listing.id ? (
+                  <div className="mt-4 p-4 bg-farm-50/80 rounded-2xl border border-farm-200 space-y-3">
+                    <div className="text-xs text-gray-700">
+                      <span className="font-medium text-gray-500">{t('currentExpectedPriceLabel')}: </span>
+                      <span className="font-extrabold text-gray-900">₹{listing.finalPricePerUnit} / {listing.unit}</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-1">
+                        {t('newExpectedPriceLabel')}:
+                      </label>
+                      <div className="relative rounded-lg shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                          <IndianRupee className="w-3.5 h-3.5" />
+                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          value={newPrice}
+                          onChange={(e) => {
+                            setNewPrice(e.target.value);
+                            setEditError('');
+                          }}
+                          placeholder="e.g. 28"
+                          className="w-full pl-8 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-farm-500 focus:border-farm-500 text-xs sm:text-sm font-semibold text-gray-900 bg-white"
+                          autoFocus
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400 text-xs">
+                          /{listing.unit}
+                        </div>
+                      </div>
+                    </div>
+
+                    {editError && (
+                      <p className="text-[11px] text-red-600 font-medium flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        {editError}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdatePrice(listing.id)}
+                        disabled={updating}
+                        className="flex-1 py-2 px-3 bg-farm-600 hover:bg-farm-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-1.5"
+                      >
+                        {updating ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            {t('updatingPrice')}
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            {t('updatePriceBtn')}
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        disabled={updating}
+                        className="py-2 px-3 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 text-xs font-semibold rounded-lg transition"
+                      >
+                        {t('cancelBtn')}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(listing)}
+                      className="w-full py-2 px-3 bg-white hover:bg-farm-50 text-farm-700 hover:text-farm-800 border border-farm-200 hover:border-farm-300 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      {t('editExpectedPriceBtn')}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 pt-3 border-t border-gray-50 text-[11px] text-gray-400 text-center">
