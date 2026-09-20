@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
@@ -55,9 +56,23 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Resolve frontend build directory: '../client/dist' relative to server directory
+const candidatePaths = [
+  path.resolve(process.cwd(), '../client/dist'),
+  path.resolve(__dirname, '../../client/dist'),
+  path.resolve(process.cwd(), 'client/dist'),
+];
+
+const clientDistPath = candidatePaths.find((p) => fs.existsSync(path.join(p, 'index.html'))) || path.resolve(process.cwd(), '../client/dist');
+const indexPath = path.join(clientDistPath, 'index.html');
+const hasFrontendBuild = fs.existsSync(indexPath);
+
+console.log(`📦 Frontend build path: ${clientDistPath} (index.html found: ${hasFrontendBuild})`);
+
 // Serve static frontend assets if built
-const clientDistPath = path.resolve(__dirname, '../../client/dist');
-app.use(express.static(clientDistPath));
+if (hasFrontendBuild) {
+  app.use(express.static(clientDistPath));
+}
 
 // 404 handler for unmatched API routes
 app.use('/api/*', (req, res) => {
@@ -66,11 +81,11 @@ app.use('/api/*', (req, res) => {
 
 // SPA fallback: serve index.html for all non-API GET requests
 app.get('*', (req, res) => {
-  res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
-    if (err) {
-      res.status(404).send('FarmNexus App: Frontend build not found or route not handled.');
-    }
-  });
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('FarmNexus App: Frontend build not found or route not handled.');
+  }
 });
 
 // Global error handler
