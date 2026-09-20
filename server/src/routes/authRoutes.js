@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import db from '../config/firebase.js';
-import { generateToken } from '../middleware/auth.js';
+import { generateToken, authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -251,18 +251,10 @@ router.post('/login', async (req, res) => {
 // ==========================================
 // GET CURRENT USER PROFILE
 // ==========================================
-router.get('/me', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, message: 'No token provided.' });
-  }
-
+router.get('/me', authenticate, async (req, res) => {
   try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'farmnexus_secure_jwt_secret_key_2025_agri');
-
-    const collection = decoded.role === 'farmer' ? 'farmers' : 'buyers';
-    const docSnap = await db.collection(collection).doc(decoded.id).get();
+    const collection = req.user.role === 'farmer' ? 'farmers' : 'buyers';
+    const docSnap = await db.collection(collection).doc(req.user.id).get();
 
     if (!docSnap.exists) {
       return res.status(404).json({ success: false, message: 'User not found.' });
@@ -276,7 +268,8 @@ router.get('/me', async (req, res) => {
       user: { id: docSnap.id, ...safeUser },
     });
   } catch (err) {
-    return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
+    console.error('Error fetching current user:', err);
+    return res.status(500).json({ success: false, message: 'Server error retrieving profile.' });
   }
 });
 
